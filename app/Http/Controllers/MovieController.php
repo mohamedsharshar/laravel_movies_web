@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Services\TmdbService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class MovieController extends Controller
@@ -20,16 +21,125 @@ class MovieController extends Controller
     {
         $page = $request->get('page', 1);
         $query = $request->get('q');
-        if ($query) {
-            // If searching, use TMDB search endpoint
-            $apiKey = config('services.tmdb.api_key');
-            $response = \Illuminate\Support\Facades\Http::get("https://api.themoviedb.org/3/search/movie", [
+        $method = $request->get('method', 'dtm');
+        // Fetch categories from TMDB API (cache for 1 day)
+        $apiKey = config('services.tmdb.api_key');
+        $categories = Cache::remember('tmdb_categories', 1440, function() use ($apiKey) {
+            $res = Http::get('https://api.themoviedb.org/3/genre/movie/list', [
                 'api_key' => $apiKey,
                 'language' => 'en-US',
-                'query' => $query,
-                'page' => $page,
             ]);
-            $movies = $response->ok() ? $response->json() : ['results' => [], 'page' => 1, 'total_pages' => 1];
+            return $res->ok() ? ($res->json()['genres'] ?? []) : [];
+        });
+        if ($query) {
+            switch ($method) {
+                case 'boolean':
+                    // Boolean Queries (AND, OR, NOT)
+                    $response = Http::get("https://api.themoviedb.org/3/search/movie", [
+                        'api_key' => $apiKey,
+                        'language' => 'en-US',
+                        'query' => $query,
+                        'page' => $page,
+                    ]);
+                    if ($response->ok()) {
+                        $results = $response->json()['results'] ?? [];
+                        $queryUpper = strtoupper($query);
+                        if (strpos($queryUpper, ' AND ') !== false) {
+                            $terms = array_map('trim', explode('AND', $queryUpper));
+                            $results = array_filter($results, function($movie) use ($terms) {
+                                foreach ($terms as $term) {
+                                    if (stripos($movie['title'], $term) === false && stripos($movie['overview'], $term) === false) {
+                                        return false;
+                                    }
+                                }
+                                return true;
+                            });
+                        } elseif (strpos($queryUpper, ' OR ') !== false) {
+                            $terms = array_map('trim', explode('OR', $queryUpper));
+                            $results = array_filter($results, function($movie) use ($terms) {
+                                foreach ($terms as $term) {
+                                    if (stripos($movie['title'], $term) !== false || stripos($movie['overview'], $term) !== false) {
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            });
+                        } elseif (strpos($queryUpper, ' NOT ') !== false) {
+                            $parts = array_map('trim', explode('NOT', $queryUpper));
+                            $include = $parts[0];
+                            $exclude = $parts[1];
+                            $results = array_filter($results, function($movie) use ($include, $exclude) {
+                                $in = stripos($movie['title'], $include) !== false || stripos($movie['overview'], $include) !== false;
+                                $out = stripos($movie['title'], $exclude) !== false || stripos($movie['overview'], $exclude) !== false;
+                                return $in && !$out;
+                            });
+                        }
+                        $movies = [
+                            'results' => array_values($results),
+                            'page' => 1,
+                            'total_pages' => 1
+                        ];
+                    } else {
+                        $movies = ['results' => [], 'page' => 1, 'total_pages' => 1];
+                    }
+                    break;
+                case 'fuzzy':
+                    // Fuzzy Search (Levenshtein distance <= 2)
+                    $response = Http::get("https://api.themoviedb.org/3/search/movie", [
+                        'api_key' => $apiKey,
+                        'language' => 'en-US',
+                        'query' => $query,
+                        'page' => $page,
+                    ]);
+                    if ($response->ok()) {
+                        $results = $response->json()['results'] ?? [];
+                        $results = array_filter($results, function($movie) use ($query) {
+                            return levenshtein(strtolower($query), strtolower($movie['title'])) <= 2
+                                || (isset($movie['overview']) && levenshtein(strtolower($query), strtolower($movie['overview'])) <= 2);
+                        });
+                        $movies = [
+                            'results' => array_values($results),
+                            'page' => 1,
+                            'total_pages' => 1
+                        ];
+                    } else {
+                        $movies = ['results' => [], 'page' => 1, 'total_pages' => 1];
+                    }
+                    break;
+                case 'phrase':
+                    // Phrase Search (exact phrase in title or overview)
+                    $response = Http::get("https://api.themoviedb.org/3/search/movie", [
+                        'api_key' => $apiKey,
+                        'language' => 'en-US',
+                        'query' => $query,
+                        'page' => $page,
+                    ]);
+                    if ($response->ok()) {
+                        $results = $response->json()['results'] ?? [];
+                        $phrase = trim($query, '"');
+                        $results = array_filter($results, function($movie) use ($phrase) {
+                            return stripos($movie['title'], $phrase) !== false
+                                || (isset($movie['overview']) && stripos($movie['overview'], $phrase) !== false);
+                        });
+                        $movies = [
+                            'results' => array_values($results),
+                            'page' => 1,
+                            'total_pages' => 1
+                        ];
+                    } else {
+                        $movies = ['results' => [], 'page' => 1, 'total_pages' => 1];
+                    }
+                    break;
+                default:
+                    // Default search
+                    $response = Http::get("https://api.themoviedb.org/3/search/movie", [
+                        'api_key' => $apiKey,
+                        'language' => 'en-US',
+                        'query' => $query,
+                        'page' => $page,
+                    ]);
+                    $movies = $response->ok() ? $response->json() : ['results' => [], 'page' => 1, 'total_pages' => 1];
+            }
         } else {
             $movies = $this->tmdb->popular($page);
         }
@@ -38,6 +148,8 @@ class MovieController extends Controller
             'currentPage' => $movies['page'],
             'totalPages' => $movies['total_pages'],
             'overview' => $movies['results'][0]['overview'] ?? '',
+            'categories' => $categories,
+            'activeCategory' => $request->route('category') ?? null,
         ]);
     }
 
@@ -74,6 +186,14 @@ class MovieController extends Controller
     {
         $page = $request->get('page', 1);
         $apiKey = config('services.tmdb.api_key');
+        // Fetch categories from TMDB API (cache for 1 day)
+        $categories = Cache::remember('tmdb_categories', 1440, function() use ($apiKey) {
+            $res = Http::get('https://api.themoviedb.org/3/genre/movie/list', [
+                'api_key' => $apiKey,
+                'language' => 'en-US',
+            ]);
+            return $res->ok() ? ($res->json()['genres'] ?? []) : [];
+        });
         $response = \Illuminate\Support\Facades\Http::get("https://api.themoviedb.org/3/search/movie", [
             'api_key' => $apiKey,
             'language' => 'en-US',
@@ -86,6 +206,7 @@ class MovieController extends Controller
             'currentPage' => $movies['page'],
             'totalPages' => $movies['total_pages'],
             'overview' => $movies['results'][0]['overview'] ?? '',
+            'categories' => $categories,
             'activeCategory' => $category,
         ]);
     }

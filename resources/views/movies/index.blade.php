@@ -1,14 +1,23 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="sidebar">
+<div class="sidebar" style="overflow-y:auto; max-height:100vh;">
     <h3 class="text-white mb-4">🎛️ Filters</h3>
     <ul class="text-white space-y-2">
-        <li><a href="{{ route('movies.category', ['category' => 'Action']) }}" class="{{ (isset($activeCategory) && strtolower($activeCategory) == 'action') ? 'active' : '' }} hover:underline">Action Movies</a></li>
-        <li><a href="{{ route('movies.category', ['category' => 'Romance']) }}" class="{{ (isset($activeCategory) && strtolower($activeCategory) == 'romance') ? 'active' : '' }} hover:underline">Romance</a></li>
-        <li><a href="{{ route('movies.category', ['category' => 'Comedy']) }}" class="{{ (isset($activeCategory) && strtolower($activeCategory) == 'comedy') ? 'active' : '' }} hover:underline">Comedy</a></li>
-        <li><a href="{{ route('movies.category', ['category' => 'Documentary']) }}" class="{{ (isset($activeCategory) && strtolower($activeCategory) == 'documentary') ? 'active' : '' }} hover:underline">Documentary</a></li>
-        <li><a href="{{ route('movies.category', ['category' => 'Sci-Fi']) }}" class="{{ (isset($activeCategory) && strtolower($activeCategory) == 'sci-fi') ? 'active' : '' }} hover:underline">Sci-Fi</a></li>
+        <li>
+            <a href="{{ route('movies.index') }}" class="{{ !isset($activeCategory) ? 'active' : '' }} hover:underline">Home</a>
+        </li>
+        @if(isset($categories) && count($categories))
+            @foreach($categories as $cat)
+                <li>
+                    <a href="{{ route('movies.category', ['category' => $cat['name']]) }}" class="{{ (isset($activeCategory) && strtolower($activeCategory) == strtolower($cat['name'])) ? 'active' : '' }} hover:underline">
+                        {{ $cat['name'] }}
+                    </a>
+                </li>
+            @endforeach
+        @else
+            <li><span>No categories found</span></li>
+        @endif
     </ul>
 </div>
 
@@ -25,12 +34,34 @@
 <div class="main-content">
     <h1 class="text-2xl font-bold text-center mb-6">🎬 Popular Movies</h1>
 
-    {{-- ✅ Search Box with Voice --}}
+    {{-- ✅ Search Box with Voice + Search Method Select --}}
     <div class="search-box">
         <input type="text" placeholder="Search for a movie..." id="searchInput" autocomplete="on" onfocus="showHistory()">
+        <select id="searchMethod" style="margin-left:8px; padding:4px 8px; border-radius:6px; border:1px solid #ccc;">
+            <option value="dtm">Document-Term Matrix</option>
+            <option value="inverted">Inverted Index</option>
+            <option value="biwords">BiWords Index</option>
+            <option value="positional">Positional Index</option>
+            <option value="bplustree">B+ Tree Index</option>
+        </select>
         <button class="mic-btn" onclick="startVoiceSearch()" title="Voice Search">🎤</button>
         <button class="search-btn" onclick="searchMovies()" title="Search">🔍 Search</button>
     </div>
+    
+    {{-- ✅ Show selected search method --}}
+    @if(request('method'))
+        <div class="mb-2 text-sm text-gray-600 text-center">
+            <span>Search Method:</span>
+            <span class="font-semibold">@switch(request('method'))
+                @case('dtm') Document-Term Matrix @break
+                @case('inverted') Inverted Index @break
+                @case('biwords') BiWords Index @break
+                @case('positional') Positional Index @break
+                @case('bplustree') B+ Tree Index @break
+                @default {{ ucfirst(request('method')) }}
+            @endswitch</span>
+        </div>
+    @endif
 
     {{-- ✅ Suggestions --}}
     <div class="suggestions mb-4" id="suggestionsContainer"></div>
@@ -38,15 +69,17 @@
     {{-- ✅ Movies Grid --}}
     <div class="movies-grid" style="grid-template-columns: repeat(7, 1fr);">
         @foreach($movies as $movie)
-            <div class="movie-card">
-                <img src="https://image.tmdb.org/t/p/w500{{ $movie['poster_path'] }}" alt="{{ $movie['title'] }}">
-                <div class="movie-info">
-                    <h2>{{ $movie['title'] }}</h2>
-                    <p>Release Date: {{ $movie['release_date'] }}</p>
-                    <p class="text-sm">Rating ⭐ {{ $movie['vote_average'] }}/10</p>
-                    <p class="text-sm text-gray-600 mt-2">{{ \Illuminate\Support\Str::limit($movie['overview'], 100) }}</p>
+            <a href="{{ route('movies.show', ['title' => urlencode($movie['title'])]) }}" style="text-decoration:none;color:inherit;">
+                <div class="movie-card" style="cursor:pointer;">
+                    <img src="https://image.tmdb.org/t/p/w500{{ $movie['poster_path'] }}" alt="{{ $movie['title'] }}">
+                    <div class="movie-info">
+                        <h2>{{ $movie['title'] }}</h2>
+                        <p>Release Date: {{ $movie['release_date'] }}</p>
+                        <p class="text-sm">Rating ⭐ {{ $movie['vote_average'] }}/10</p>
+                        <p class="text-sm text-gray-600 mt-2">{{ \Illuminate\Support\Str::limit($movie['overview'], 100) }}</p>
+                    </div>
                 </div>
-            </div>
+            </a>
         @endforeach
     </div>
 
@@ -112,13 +145,14 @@ function startVoiceSearch() {
 
 function searchMovies() {
     const input = document.getElementById("searchInput");
+    const method = document.getElementById("searchMethod").value;
     const query = input.value.trim();
     if (query.length < 2) {
         showHistory();
         return;
     }
-    // Redirect to the same page with ?q=... (or you can use AJAX to update results)
-    window.location.href = `?q=${encodeURIComponent(query)}`;
+    // Redirect to the same page with ?q=...&method=...
+    window.location.href = `?q=${encodeURIComponent(query)}&method=${encodeURIComponent(method)}`;
 }
 
 function showHistory() {
@@ -140,7 +174,13 @@ const suggestionsContainer = document.getElementById("suggestionsContainer");
 
 searchInput.addEventListener("keydown", function(e) {
     const tags = suggestionsContainer.querySelectorAll('.tag');
-    if (!tags.length) return;
+    if (!tags.length) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchMovies();
+        }
+        return;
+    }
     let idx = Array.from(tags).findIndex(tag => tag.classList.contains('active'));
     if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -161,7 +201,6 @@ searchInput.addEventListener("keydown", function(e) {
             e.preventDefault();
             setSearch(tags[idx].textContent);
         } else {
-            // No suggestion selected, trigger search
             e.preventDefault();
             searchMovies();
         }
@@ -204,18 +243,17 @@ searchInput.addEventListener("input", async function () {
 function setSearch(text) {
     searchInput.value = text;
     suggestionsContainer.innerHTML = "";
-    // Get selected category from sidebar (if any)
     let category = '';
     const activeFilter = document.querySelector('.sidebar ul li a.active, .sidebar ul li a[style*="font-weight: bold"]');
     if (activeFilter) {
         category = activeFilter.textContent.trim();
     }
-    // Redirect to main search page with both category and suggestion as query
     let q = text;
     if (category && category.toLowerCase() !== 'all') {
         q = category + ' ' + text;
     }
-    window.location.href = '/?q=' + encodeURIComponent(q);
+    const method = document.getElementById("searchMethod").value;
+    window.location.href = `/?q=${encodeURIComponent(q)}&method=${encodeURIComponent(method)}`;
 }
 </script>
 
@@ -315,6 +353,9 @@ function setSearch(text) {
     .movies-grid {
         grid-template-columns: 1fr !important;
     }
+}
+.search-box input {
+    width: 100%;
 }
 .menubar {
     display: none;

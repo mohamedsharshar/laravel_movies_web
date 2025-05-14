@@ -25,4 +25,13 @@ class TmdbService
         return $response->json();
     }
 
+    public function getMovieVideos($movieId)
+    {
+        $response = Http::get("{$this->baseUrl}/movie/{$movieId}/videos", [
+            'api_key' => $this->apiKey,
+            'language' => 'en-US',
+        ]);
+        return $response->ok() ? $response->json()['results'] ?? [] : [];
+    }
+
 }

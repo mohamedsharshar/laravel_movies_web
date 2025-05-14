@@ -33,6 +33,21 @@ class MovieController extends Controller
         });
         if ($query) {
             switch ($method) {
+                case 'dtm':
+                    $movies = $this->searchDTM($query, $apiKey, $page);
+                    break;
+                case 'inverted':
+                    $movies = $this->searchInverted($query, $apiKey, $page);
+                    break;
+                case 'biwords':
+                    $movies = $this->searchBiWords($query, $apiKey, $page);
+                    break;
+                case 'positional':
+                    $movies = $this->searchPositional($query, $apiKey, $page);
+                    break;
+                case 'bplustree':
+                    $movies = $this->searchBPlusTree($query, $apiKey, $page);
+                    break;
                 case 'boolean':
                     // Boolean Queries (AND, OR, NOT)
                     $response = Http::get("https://api.themoviedb.org/3/search/movie", [
@@ -131,14 +146,7 @@ class MovieController extends Controller
                     }
                     break;
                 default:
-                    // Default search
-                    $response = Http::get("https://api.themoviedb.org/3/search/movie", [
-                        'api_key' => $apiKey,
-                        'language' => 'en-US',
-                        'query' => $query,
-                        'page' => $page,
-                    ]);
-                    $movies = $response->ok() ? $response->json() : ['results' => [], 'page' => 1, 'total_pages' => 1];
+                    $movies = $this->searchDTM($query, $apiKey, $page);
             }
         } else {
             $movies = $this->tmdb->popular($page);
@@ -169,16 +177,24 @@ class MovieController extends Controller
             'page' => 1,
         ]);
         $movie = null;
+        $video = null;
         if ($response->ok()) {
             $results = $response->json()['results'] ?? [];
             $movie = collect($results)->first(function($m) use ($title) {
                 return strtolower($m['title']) === strtolower($title);
             }) ?? ($results[0] ?? null);
+            if ($movie && isset($movie['id'])) {
+                $tmdb = app(\App\Services\TmdbService::class);
+                $videos = $tmdb->getMovieVideos($movie['id']);
+                $video = collect($videos)->first(function($v) {
+                    return $v['site'] === 'YouTube' && $v['type'] === 'Trailer';
+                }) ?? (count($videos) ? $videos[0] : null);
+            }
         }
         if (!$movie) {
             abort(404, 'Movie not found');
         }
-        return view('movies.show', ['movie' => $movie, 'category' => $category]);
+        return view('movies.show', ['movie' => $movie, 'category' => $category, 'video' => $video]);
     }
 
     // صفحة أفلام التصنيف
@@ -274,5 +290,157 @@ class MovieController extends Controller
         }
 
         return response()->json(['suggestions' => $sorted]);
+    }
+
+    // Document-Term Matrix Search
+    private function searchDTM($query, $apiKey, $page) {
+        $response = Http::get("https://api.themoviedb.org/3/search/movie", [
+            'api_key' => $apiKey,
+            'language' => 'en-US',
+            'query' => $query,
+            'page' => $page,
+        ]);
+        if ($response->ok()) {
+            $results = $response->json()['results'] ?? [];
+            $terms = preg_split('/\s+/', strtolower($query));
+            // Filter: at least one term in title or overview
+            $results = array_filter($results, function($movie) use ($terms) {
+                foreach ($terms as $term) {
+                    if ((isset($movie['title']) && stripos($movie['title'], $term) !== false) ||
+                        (isset($movie['overview']) && stripos($movie['overview'], $term) !== false)) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+            return [
+                'results' => array_values($results),
+                'page' => 1,
+                'total_pages' => 1
+            ];
+        }
+        return ['results' => [], 'page' => 1, 'total_pages' => 1];
+    }
+
+    // Inverted Index Search
+    private function searchInverted($query, $apiKey, $page) {
+        $response = Http::get("https://api.themoviedb.org/3/search/movie", [
+            'api_key' => $apiKey,
+            'language' => 'en-US',
+            'query' => $query,
+            'page' => $page,
+        ]);
+        if ($response->ok()) {
+            $results = $response->json()['results'] ?? [];
+            $terms = preg_split('/\s+/', strtolower($query));
+            usort($results, function($a, $b) use ($terms) {
+                $aScore = 0; $bScore = 0;
+                foreach ($terms as $term) {
+                    if ((isset($a['title']) && stripos($a['title'], $term) !== false) ||
+                        (isset($a['overview']) && stripos($a['overview'], $term) !== false)) $aScore++;
+                    if ((isset($b['title']) && stripos($b['title'], $term) !== false) ||
+                        (isset($b['overview']) && stripos($b['overview'], $term) !== false)) $bScore++;
+                }
+                return $bScore <=> $aScore;
+            });
+            return [
+                'results' => $results,
+                'page' => 1,
+                'total_pages' => 1
+            ];
+        }
+        return ['results' => [], 'page' => 1, 'total_pages' => 1];
+    }
+
+    // BiWords Index Search
+    private function searchBiWords($query, $apiKey, $page) {
+        $response = Http::get("https://api.themoviedb.org/3/search/movie", [
+            'api_key' => $apiKey,
+            'language' => 'en-US',
+            'query' => $query,
+            'page' => $page,
+        ]);
+        if ($response->ok()) {
+            $results = $response->json()['results'] ?? [];
+            $words = preg_split('/\s+/', strtolower($query));
+            $bigrams = [];
+            for ($i = 0; $i < count($words) - 1; $i++) {
+                $bigrams[] = $words[$i] . ' ' . $words[$i+1];
+            }
+            usort($results, function($a, $b) use ($bigrams) {
+                $aScore = 0; $bScore = 0;
+                foreach ($bigrams as $bigram) {
+                    if ((isset($a['title']) && stripos(strtolower($a['title']), $bigram) !== false) ||
+                        (isset($a['overview']) && stripos(strtolower($a['overview']), $bigram) !== false)) $aScore++;
+                    if ((isset($b['title']) && stripos(strtolower($b['title']), $bigram) !== false) ||
+                        (isset($b['overview']) && stripos(strtolower($b['overview']), $bigram) !== false)) $bScore++;
+                }
+                return $bScore <=> $aScore;
+            });
+            return [
+                'results' => $results,
+                'page' => 1,
+                'total_pages' => 1
+            ];
+        }
+        return ['results' => [], 'page' => 1, 'total_pages' => 1];
+    }
+
+    // Positional Index Search
+    private function searchPositional($query, $apiKey, $page) {
+        $response = Http::get("https://api.themoviedb.org/3/search/movie", [
+            'api_key' => $apiKey,
+            'language' => 'en-US',
+            'query' => $query,
+            'page' => $page,
+        ]);
+        if ($response->ok()) {
+            $results = $response->json()['results'] ?? [];
+            $phrase = strtolower($query);
+            usort($results, function($a, $b) use ($phrase) {
+                $aScore = 0; $bScore = 0;
+                if ((isset($a['title']) && stripos(strtolower($a['title']), $phrase) !== false) ||
+                    (isset($a['overview']) && stripos(strtolower($a['overview']), $phrase) !== false)) $aScore += 2;
+                if ((isset($b['title']) && stripos(strtolower($b['title']), $phrase) !== false) ||
+                    (isset($b['overview']) && stripos(strtolower($b['overview']), $phrase) !== false)) $bScore += 2;
+                return $bScore <=> $aScore;
+            });
+            return [
+                'results' => $results,
+                'page' => 1,
+                'total_pages' => 1
+            ];
+        }
+        return ['results' => [], 'page' => 1, 'total_pages' => 1];
+    }
+
+    // B+ Tree Index Search (simulated by sorting alphabetically by title and overview)
+    private function searchBPlusTree($query, $apiKey, $page) {
+        $response = Http::get("https://api.themoviedb.org/3/search/movie", [
+            'api_key' => $apiKey,
+            'language' => 'en-US',
+            'query' => $query,
+            'page' => $page,
+        ]);
+        if ($response->ok()) {
+            $results = $response->json()['results'] ?? [];
+            usort($results, function($a, $b) {
+                $aTitle = $a['title'] ?? '';
+                $bTitle = $b['title'] ?? '';
+                $aOverview = $a['overview'] ?? '';
+                $bOverview = $b['overview'] ?? '';
+                $cmp = strcmp($aTitle, $bTitle);
+                if ($cmp === 0) {
+                    return strcmp($aOverview, $bOverview);
+                }
+                return $cmp;
+            });
+            return [
+                'results' => $results,
+                'page' => 1,
+                'total_pages' => 1
+            ];
+        }
+        return ['results' => [], 'page' => 1, 'total_pages' => 1];
     }
 }

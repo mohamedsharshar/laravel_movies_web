@@ -4,11 +4,11 @@
 <div class="sidebar">
     <h3 class="text-white mb-4">🎛️ Filters</h3>
     <ul class="text-white space-y-2">
-        <li><a href="#" class="hover:underline">Action Movies</a></li>
-        <li><a href="#" class="hover:underline">Romance</a></li>
-        <li><a href="#" class="hover:underline">Comedy</a></li>
-        <li><a href="#" class="hover:underline">Documentary</a></li>
-        <li><a href="#" class="hover:underline">Sci-Fi</a></li>
+        <li><a href="{{ route('movies.category', ['category' => 'Action']) }}" class="{{ (isset($activeCategory) && strtolower($activeCategory) == 'action') ? 'active' : '' }} hover:underline">Action Movies</a></li>
+        <li><a href="{{ route('movies.category', ['category' => 'Romance']) }}" class="{{ (isset($activeCategory) && strtolower($activeCategory) == 'romance') ? 'active' : '' }} hover:underline">Romance</a></li>
+        <li><a href="{{ route('movies.category', ['category' => 'Comedy']) }}" class="{{ (isset($activeCategory) && strtolower($activeCategory) == 'comedy') ? 'active' : '' }} hover:underline">Comedy</a></li>
+        <li><a href="{{ route('movies.category', ['category' => 'Documentary']) }}" class="{{ (isset($activeCategory) && strtolower($activeCategory) == 'documentary') ? 'active' : '' }} hover:underline">Documentary</a></li>
+        <li><a href="{{ route('movies.category', ['category' => 'Sci-Fi']) }}" class="{{ (isset($activeCategory) && strtolower($activeCategory) == 'sci-fi') ? 'active' : '' }} hover:underline">Sci-Fi</a></li>
     </ul>
 </div>
 
@@ -17,8 +17,8 @@
     <span style="font-weight:bold; font-size:1.1rem;">🎬 Movie App</span>
     <div class="menu-links">
         <a href="{{ route('movies.index') }}">Home</a>
-        <a href="#">Popular</a>
-        <a href="#">Contact Us</a>
+        <a href="{{ route('movies.category', ['category' => 'Popular']) }}">Popular</a>
+        <a href="{{ route('movies.category', ['category' => 'Documentary']) }}">Contact Us</a>
     </div>
 </div>
 

@@ -69,6 +69,27 @@ class MovieController extends Controller
         return view('movies.show', ['movie' => $movie, 'category' => $category]);
     }
 
+    // صفحة أفلام التصنيف
+    public function category($category, Request $request)
+    {
+        $page = $request->get('page', 1);
+        $apiKey = config('services.tmdb.api_key');
+        $response = \Illuminate\Support\Facades\Http::get("https://api.themoviedb.org/3/search/movie", [
+            'api_key' => $apiKey,
+            'language' => 'en-US',
+            'query' => $category,
+            'page' => $page,
+        ]);
+        $movies = $response->ok() ? $response->json() : ['results' => [], 'page' => 1, 'total_pages' => 1];
+        return view('movies.index', [
+            'movies' => $movies['results'],
+            'currentPage' => $movies['page'],
+            'totalPages' => $movies['total_pages'],
+            'overview' => $movies['results'][0]['overview'] ?? '',
+            'activeCategory' => $category,
+        ]);
+    }
+
     public function suggestions(Request $request)
     {
         $query = $request->input('q');

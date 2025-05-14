@@ -67,16 +67,27 @@
     <div class="suggestions mb-4" id="suggestionsContainer"></div>
 
     {{-- ✅ Movies Grid --}}
+    @php
+        // Helper to highlight search terms in a string
+        function highlight_terms($text, $query) {
+            if (!$query) return $text;
+            $terms = preg_split('/\s+/', preg_quote($query, '/'));
+            $pattern = '/(' . implode('|', array_filter($terms)) . ')/i';
+            return preg_replace_callback($pattern, function($m) {
+                return '<span class="highlighted-term">' . $m[0] . '</span>';
+            }, e($text));
+        }
+    @endphp
     <div class="movies-grid" style="grid-template-columns: repeat(7, 1fr);">
         @foreach($movies as $movie)
             <a href="{{ route('movies.show', ['title' => urlencode($movie['title'])]) }}" style="text-decoration:none;color:inherit;">
                 <div class="movie-card" style="cursor:pointer;">
                     <img src="https://image.tmdb.org/t/p/w500{{ $movie['poster_path'] }}" alt="{{ $movie['title'] }}">
                     <div class="movie-info">
-                        <h2>{{ $movie['title'] }}</h2>
+                        <h2>{!! highlight_terms($movie['title'], $searchQuery ?? request('q')) !!}</h2>
                         <p>Release Date: {{ $movie['release_date'] }}</p>
                         <p class="text-sm">Rating ⭐ {{ $movie['vote_average'] }}/10</p>
-                        <p class="text-sm text-gray-600 mt-2">{{ \Illuminate\Support\Str::limit($movie['overview'], 100) }}</p>
+                        <p class="text-sm text-gray-600 mt-2">{!! highlight_terms(\Illuminate\Support\Str::limit($movie['overview'], 100), $searchQuery ?? request('q')) !!}</p>
                     </div>
                 </div>
             </a>
@@ -425,6 +436,13 @@ function setSearch(text) {
     .sidebar h3 {
         font-size: 1rem;
     }
+}
+.highlighted-term {
+    background: #ffe066;
+    color: #222;
+    border-radius: 3px;
+    padding: 0 2px;
+    font-weight: bold;
 }
 </style>
 @endsection

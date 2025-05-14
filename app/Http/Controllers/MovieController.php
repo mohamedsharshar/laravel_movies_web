@@ -158,6 +158,7 @@ class MovieController extends Controller
             'overview' => $movies['results'][0]['overview'] ?? '',
             'categories' => $categories,
             'activeCategory' => $request->route('category') ?? null,
+            'searchQuery' => $query, // Pass the search query for highlighting
         ]);
     }
 

@@ -1,0 +1,127 @@
+:root {
+  --color-sidebar-bg: #1C2541;
+  --color-page-bg:   #F8FAFC;
+  --color-accent:    #00D1B2;
+  --color-btn:       #1C3AA9;
+  --color-text:      #1F2937;
+  --color-card-bg:   #FFFFFF;
+}
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background-color: var(--color-page-bg);
+  color: var(--color-text);
+}
+
+/* ✅ Sidebar */
+.sidebar {
+  width: 220px;
+  background-color: var(--color-sidebar-bg);
+  height: 2053px;
+  float: left;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/* ✅ Main content */
+.main-content {
+  margin-left: 240px;
+  padding: 2rem;
+}
+
+/* ✅ Navbar */
+.navbar {
+  background-color: var(--color-sidebar-bg);
+  padding: 1rem 2rem;
+  color: white;
+}
+.navbar .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.navbar .logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+.navbar .nav-links {
+  list-style: none;
+  display: flex;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+}
+.navbar .nav-links li a {
+  color: white;
+  text-decoration: none;
+  font-size: 1rem;
+}
+.navbar .nav-links li a:hover {
+  text-decoration: underline;
+}
+
+/* ✅ Search box */
+.search-box {
+  display: flex;
+  border: 2px solid var(--color-accent);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.search-box input {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: none;
+  outline: none;
+}
+.search-box button {
+  background-color: var(--color-btn);
+  color: white;
+  border: none;
+  padding: 0 1rem;
+  cursor: pointer;
+}
+
+/* ✅ Suggestions */
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.suggestions .tag {
+  background-color: #F3F4F6;
+  border: 1px solid #D1D5DB;
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.suggestions .tag:hover {
+  background-color: #E5E7EB;
+}
+
+/* ✅ Movies grid */
+.movies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+.movie-card {
+  background-color: var(--color-card-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.movie-card img {
+  width: 100%;
+  display: block;
+}
+.movie-info {
+  padding: 0.5rem;
+}
+.movie-info h2 {
+  font-size: 1.1rem;
+  margin: 0.
+}

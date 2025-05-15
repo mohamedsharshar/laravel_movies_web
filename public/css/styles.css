@@ -160,7 +160,6 @@ body {
   margin-bottom: 1.5rem;
   background: #fff;
   box-shadow: 0 2px 12px rgba(0,209,178,0.07);
-  max-width: 480px;
   margin-left: auto;
   margin-right: auto;
   transition: box-shadow 0.2s;
@@ -221,6 +220,44 @@ body {
   background: var(--color-accent);
   color: #fff;
   box-shadow: 0 2px 8px rgba(0,209,178,0.13);
+}
+
+/* Style for query method checkboxes (Phrase, Fuzzy, Boolean) */
+.search-box label input[type="checkbox"] {
+  accent-color: var(--color-accent);
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
+}
+.search-box label {
+  font-size: 1.04rem;
+  color: #1C2541;
+  background: #e6f9f7;
+  border-radius: 6px;
+  padding: 4px 10px;
+  margin-right: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border: 1px solid #d1f7f2;
+  display: flex;
+  align-items: center;
+}
+.search-box label:hover {
+  background: var(--color-accent);
+  color: #fff;
+}
+.search-box select {
+  font-size: 1.04rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1.5px solid #ccc;
+  margin-left: 8px;
+  background: #f8fafc;
+  color: #1C2541;
+  transition: border 0.15s;
+}
+.search-box select:focus {
+  border-color: var(--color-accent);
 }
 
 /* ✅ Suggestions */

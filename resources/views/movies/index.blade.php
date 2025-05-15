@@ -37,13 +37,24 @@
     {{-- ✅ Search Box with Voice + Search Method Select --}}
     <div class="search-box">
         <input type="text" placeholder="Search for a movie..." id="searchInput" autocomplete="on" onfocus="showHistory()">
-        <select id="searchMethod" style="margin-left:8px; padding:4px 8px; border-radius:6px; border:1px solid #ccc;">
-            <option value="dtm">Document-Term Matrix</option>
-            <option value="inverted">Inverted Index</option>
-            <option value="biwords">BiWords Index</option>
-            <option value="positional">Positional Index</option>
-            <option value="bplustree">B+ Tree Index</option>
-        </select>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:8px 0;">
+            <label style="display:flex;align-items:center;gap:4px;">
+                <input type="checkbox" name="queryMethod" id="method_boolean" value="boolean"> Boolean
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;">
+                <input type="checkbox" name="queryMethod" id="method_fuzzy" value="fuzzy"> Fuzzy
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;">
+                <input type="checkbox" name="queryMethod" id="method_phrase" value="phrase"> Phrase
+            </label>
+            <select id="searchMethod" style="margin-left:12px; padding:4px 8px; border-radius:6px; border:1px solid #ccc;">
+                <option value="dtm">Matrix Document-Term</option>
+                <option value="inverted">Index Inverted</option>
+                <option value="biwords">Index BiWords</option>
+                <option value="positional">Index Positional</option>
+                <option value="bplustree">Index Tree +B</option>
+            </select>
+        </div>
         <button class="mic-btn" onclick="startVoiceSearch()" title="Voice Search">🎤</button>
         <button class="search-btn" onclick="searchMovies()" title="Search">🔍 Search</button>
     </div>
@@ -156,13 +167,16 @@ function startVoiceSearch() {
 
 function searchMovies() {
     const input = document.getElementById("searchInput");
-    const method = document.getElementById("searchMethod").value;
     const query = input.value.trim();
+    // Check which query method is checked (priority: boolean > fuzzy > phrase)
+    let method = document.getElementById("searchMethod").value;
+    if (document.getElementById("method_boolean").checked) method = "boolean";
+    else if (document.getElementById("method_fuzzy").checked) method = "fuzzy";
+    else if (document.getElementById("method_phrase").checked) method = "phrase";
     if (query.length < 2) {
         showHistory();
         return;
     }
-    // Redirect to the same page with ?q=...&method=...
     window.location.href = `?q=${encodeURIComponent(query)}&method=${encodeURIComponent(method)}`;
 }
 
@@ -263,7 +277,7 @@ function setSearch(text) {
     if (category && category.toLowerCase() !== 'all') {
         q = category + ' ' + text;
     }
-    const method = document.getElementById("searchMethod").value;
+    const method = document.querySelector('input[name="searchMethod"]:checked').value;
     window.location.href = `/?q=${encodeURIComponent(q)}&method=${encodeURIComponent(method)}`;
 }
 </script>

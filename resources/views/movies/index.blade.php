@@ -38,13 +38,13 @@
     <div class="search-box">
         <input type="text" placeholder="Search for a movie..." id="searchInput" autocomplete="on" onfocus="showHistory()">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:8px 0;">
-            <label style="display:flex;align-items:center;gap:4px;">
+            <label class="query-method-label" id="label_boolean" style="display:flex;align-items:center;gap:4px;">
                 <input type="checkbox" name="queryMethod" id="method_boolean" value="boolean"> Boolean
             </label>
-            <label style="display:flex;align-items:center;gap:4px;">
+            <label class="query-method-label" id="label_fuzzy" style="display:flex;align-items:center;gap:4px;">
                 <input type="checkbox" name="queryMethod" id="method_fuzzy" value="fuzzy"> Fuzzy
             </label>
-            <label style="display:flex;align-items:center;gap:4px;">
+            <label class="query-method-label" id="label_phrase" style="display:flex;align-items:center;gap:4px;">
                 <input type="checkbox" name="queryMethod" id="method_phrase" value="phrase"> Phrase
             </label>
             <select id="searchMethod" style="margin-left:12px; padding:4px 8px; border-radius:6px; border:1px solid #ccc;">
@@ -55,7 +55,7 @@
                 <option value="bplustree">Index Tree +B</option>
             </select>
         </div>
-        <button class="mic-btn" onclick="startVoiceSearch()" title="Voice Search">🎤</button>
+        <button class="mic-btn" id="micBtn" onclick="startVoiceSearch()" title="Voice Search">🎤</button>
         <button class="search-btn" onclick="searchMovies()" title="Search">🔍 Search</button>
     </div>
     
@@ -79,13 +79,16 @@
 
     {{-- ✅ Movies Grid --}}
     @php
-        // Helper to highlight search terms in a string
+        // Helper to highlight search terms in a string (works for both text and voice input)
         function highlight_terms($text, $query) {
             if (!$query) return $text;
+            $query = trim($query, '"');
+            // Split on whitespace for multiple words
             $terms = preg_split('/\s+/', preg_quote($query, '/'));
-            $pattern = '/(' . implode('|', array_filter($terms)) . ')/i';
+            $pattern = '/(' . implode('|', array_filter($terms)) . ')/iu';
+            // Use preg_replace_callback to wrap each match in <span class="highlight">
             return preg_replace_callback($pattern, function($m) {
-                return '<span class="highlighted-term">' . $m[0] . '</span>';
+                return '<span class="highlight">' . $m[0] . '</span>';
             }, e($text));
         }
     @endphp
@@ -155,13 +158,58 @@
 
 {{-- ✅ Voice Search + Suggestions --}}
 <script>
+// --- Query Method Highlight ---
+const methodCheckboxes = [
+    document.getElementById('method_boolean'),
+    document.getElementById('method_fuzzy'),
+    document.getElementById('method_phrase')
+];
+const methodLabels = [
+    document.getElementById('label_boolean'),
+    document.getElementById('label_fuzzy'),
+    document.getElementById('label_phrase')
+];
+methodCheckboxes.forEach((cb, idx) => {
+    cb.addEventListener('change', function() {
+        if (cb.checked) {
+            // Uncheck others
+            methodCheckboxes.forEach((other, i) => {
+                if (other !== cb) {
+                    other.checked = false;
+                    methodLabels[i].classList.remove('query-method-active');
+                }
+            });
+            methodLabels[idx].classList.add('query-method-active');
+        } else {
+            methodLabels[idx].classList.remove('query-method-active');
+        }
+    });
+});
+// On page load, highlight the checked one (if any)
+window.addEventListener('DOMContentLoaded', () => {
+    methodCheckboxes.forEach((cb, idx) => {
+        if (cb.checked) methodLabels[idx].classList.add('query-method-active');
+        else methodLabels[idx].classList.remove('query-method-active');
+    });
+});
+
+// --- Mic Highlight ---
 function startVoiceSearch() {
+    const micBtn = document.getElementById('micBtn');
+    micBtn.classList.add('mic-active');
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = "en-US";
     recognition.start();
     recognition.onresult = function(event) {
         document.getElementById("searchInput").value = event.results[0][0].transcript;
+        micBtn.classList.remove('mic-active');
         searchMovies();
+    };
+    recognition.onend = function() {
+        micBtn.classList.remove('mic-active');
+    };
+    recognition.onerror = function() {
+        micBtn.classList.remove('mic-active');
     };
 }
 
@@ -193,6 +241,26 @@ function showHistory() {
             });
     }
 }
+
+// Highlight selected query method
+function updateQueryMethodHighlight() {
+    const methods = ['boolean', 'fuzzy', 'phrase'];
+    methods.forEach(m => {
+        const input = document.getElementById('method_' + m);
+        const label = input.closest('label');
+        if (input.checked) {
+            label.classList.add('query-method-active');
+        } else {
+            label.classList.remove('query-method-active');
+        }
+    });
+}
+
+document.getElementById('method_boolean').addEventListener('change', updateQueryMethodHighlight);
+document.getElementById('method_fuzzy').addEventListener('change', updateQueryMethodHighlight);
+document.getElementById('method_phrase').addEventListener('change', updateQueryMethodHighlight);
+// Initial highlight
+updateQueryMethodHighlight();
 
 const searchInput = document.getElementById("searchInput");
 const suggestionsContainer = document.getElementById("suggestionsContainer");
@@ -280,6 +348,25 @@ function setSearch(text) {
     const method = document.querySelector('input[name="searchMethod"]:checked').value;
     window.location.href = `/?q=${encodeURIComponent(q)}&method=${encodeURIComponent(method)}`;
 }
+
+// --- Dynamic highlight for voice input (if results are updated via JS) ---
+function applyDynamicHighlight(query) {
+    if (!query) return;
+    const terms = query.trim().replace(/"/g, '').split(/\s+/).filter(Boolean);
+    if (!terms.length) return;
+    const pattern = new RegExp('(' + terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
+    document.querySelectorAll('.movie-info').forEach(function(info) {
+        ['h2', 'p.text-sm.text-gray-600'].forEach(function(sel) {
+            info.querySelectorAll(sel).forEach(function(el) {
+                let original = el.textContent;
+                el.innerHTML = original.replace(pattern, function(m) {
+                    return '<span class="highlight">' + m + '</span>';
+                });
+            });
+        });
+    });
+}
+// If you update results via JS, call: applyDynamicHighlight(document.getElementById('searchInput').value);
 </script>
 
 {{-- ✅ Styles --}}
@@ -338,125 +425,49 @@ function setSearch(text) {
     color: #fff;
     border-color: #1C3AA9;
     box-shadow: 0 2px 8px rgba(28,58,169,0.13);
-    z-index: 2;
 }
-.pagination span {
-    color: #b0b0b0;
-    font-size: 1.2rem;
-    padding: 0 0.5rem;
-    user-select: none;
-}
-@media (max-width: 600px) {
-    .pagination a button, .pagination button {
-        padding: 0.4rem 0.7rem;
-        min-width: 32px;
-        min-height: 32px;
-        font-size: 0.98rem;
-    }
-}
-@media (max-width: 900px) {
-    .sidebar {
-        display: none !important;
-    }
-    .main-content {
-        margin-left: 0 !important;
-        padding: 1rem !important;
-    }
-    .movies-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-    }
-    .search-box {
-        max-width: 100% !important;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    .menubar {
-        display: flex !important;
-    }
-}
-@media (max-width: 600px) {
-    .movies-grid {
-        grid-template-columns: 1fr !important;
-    }
-}
-.search-box input {
-    width: 100%;
-}
-.menubar {
-    display: none;
-    background: var(--color-sidebar-bg);
-    color: #fff;
-    padding: 1rem;
-    justify-content: space-between;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 20;
-}
-.menubar .menu-links {
-    display: flex;
-    gap: 1.2rem;
-}
-.menubar .menu-links a {
-    color: #fff;
-    text-decoration: none;
-    font-size: 1.08rem;
-    padding: 0.4rem 1rem;
+
+.query-method-label {
+    border: 2px solid transparent;
     border-radius: 6px;
-    transition: background 0.18s, color 0.18s;
+    padding: 2px 8px;
+    transition: border 0.18s, background 0.18s;
+    cursor: pointer;
 }
-.menubar .menu-links a:hover {
-    background: var(--color-accent);
-    color: #1C2541;
+.query-method-active {
+    border: 2px solid var(--color-accent, #00bfae);
+    background: #e0f7fa;
+    color: #00796b;
 }
-@media (max-width: 900px) {
-    .sidebar {
-        position: static !important;
-        width: 100vw !important;
-        min-height: unset !important;
-        height: auto !important;
-        float: none !important;
-        box-shadow: none !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
-        padding: 1rem 0.5rem !important;
-    }
-    .sidebar ul {
-        display: flex;
-        flex-direction: row;
-        gap: 1rem;
-    }
-    .main-content {
-        margin-left: 0 !important;
-        padding: 1rem !important;
-    }
-    .movies-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-    }
-    .search-box {
-        max-width: 100% !important;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
+.mic-btn {
+    background: #fff;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.3rem;
+    transition: border 0.18s, box-shadow 0.18s;
+    margin-right: 8px;
 }
-@media (max-width: 600px) {
-    .movies-grid {
-        grid-template-columns: 1fr !important;
-    }
-    .search-box input {
-        font-size: 1rem;
-    }
-    .sidebar h3 {
-        font-size: 1rem;
-    }
+.mic-active {
+    border: 2.5px solid var(--color-accent, #00bfae);
+    box-shadow: 0 0 0 4px #00bfae33;
+    background: #e0f7fa;
+    color: #00796b;
+    animation: micPulse 1s infinite alternate;
 }
-.highlighted-term {
-    background: #ffe066;
+@keyframes micPulse {
+    0% { box-shadow: 0 0 0 4px #00bfae33; }
+    100% { box-shadow: 0 0 0 10px #00bfae22; }
+}
+.highlight {
+    background: #ffe082;
     color: #222;
     border-radius: 3px;
     padding: 0 2px;
     font-weight: bold;
+    transition: background 0.2s, color 0.2s;
 }
 </style>
+</div>
 @endsection

@@ -32,37 +32,8 @@ class MovieController extends Controller
             return $res->ok() ? ($res->json()['genres'] ?? []) : [];
         });
         if ($query) {
-            switch ($method) {
-                case 'dtm':
-                    $movies = $this->searchDTM($query, $apiKey, $page);
-                    break;
-                case 'inverted':
-                    $movies = $this->searchInverted($query, $apiKey, $page);
-                    break;
-                case 'biwords':
-                    $movies = $this->searchBiWords($query, $apiKey, $page);
-                    break;
-                case 'positional':
-                    $movies = $this->searchPositional($query, $apiKey, $page);
-                    break;
-                case 'bplustree':
-                    $movies = $this->searchBPlusTree($query, $apiKey, $page);
-                    break;
-                case 'boolean':
-                    $movies = $this->booleanSearch($query, $apiKey, $page);
-                    break;
-                case 'fuzzy':
-                    $movies = $this->fuzzySearch($query, $apiKey, $page);
-                    break;
-                case 'phrase':
-                    $movies = $this->phraseSearch($query, $apiKey, $page);
-                    break;
-                case 'synonym':
-                    $movies = $this->synonymSearch($query, $apiKey, $page);
-                    break;
-                default:
-                    $movies = $this->searchDTM($query, $apiKey, $page);
-            }
+            // Use smartQuerySearch to auto-detect method
+            $movies = $this->smartQuerySearch($query, $apiKey, $page);
         } else {
             $movies = $this->tmdb->popular($page);
         }
@@ -375,7 +346,7 @@ class MovieController extends Controller
                 $terms = array_map('trim', explode('AND', $queryUpper));
                 $results = array_filter($results, function($movie) use ($terms) {
                     foreach ($terms as $term) {
-                        if (stripos($movie['title'], $term) === false && stripos($movie['overview'], $term) === false) {
+                        if ((stripos($movie['title'], $term) === false) && (stripos($movie['overview'], $term) === false)) {
                             return false;
                         }
                     }
@@ -385,7 +356,7 @@ class MovieController extends Controller
                 $terms = array_map('trim', explode('OR', $queryUpper));
                 $results = array_filter($results, function($movie) use ($terms) {
                     foreach ($terms as $term) {
-                        if (stripos($movie['title'], $term) !== false || stripos($movie['overview'], $term) !== false) {
+                        if ((stripos($movie['title'], $term) !== false) || (stripos($movie['overview'], $term) !== false)) {
                             return true;
                         }
                     }
@@ -396,8 +367,8 @@ class MovieController extends Controller
                 $include = $parts[0];
                 $exclude = $parts[1];
                 $results = array_filter($results, function($movie) use ($include, $exclude) {
-                    $in = stripos($movie['title'], $include) !== false || stripos($movie['overview'], $include) !== false;
-                    $out = stripos($movie['title'], $exclude) !== false || stripos($movie['overview'], $exclude) !== false;
+                    $in = (stripos($movie['title'], $include) !== false) || (stripos($movie['overview'], $include) !== false);
+                    $out = (stripos($movie['title'], $exclude) !== false) || (stripos($movie['overview'], $exclude) !== false);
                     return $in && !$out;
                 });
             }
@@ -421,7 +392,7 @@ class MovieController extends Controller
         if ($response->ok()) {
             $results = $response->json()['results'] ?? [];
             $results = array_filter($results, function($movie) use ($query) {
-                return levenshtein(strtolower($query), strtolower($movie['title'])) <= 2
+                return (levenshtein(strtolower($query), strtolower($movie['title'])) <= 2)
                     || (isset($movie['overview']) && levenshtein(strtolower($query), strtolower($movie['overview'])) <= 2);
             });
             return [
@@ -445,7 +416,7 @@ class MovieController extends Controller
             $results = $response->json()['results'] ?? [];
             $phrase = trim($query, '"');
             $results = array_filter($results, function($movie) use ($phrase) {
-                return stripos($movie['title'], $phrase) !== false
+                return (stripos($movie['title'], $phrase) !== false)
                     || (isset($movie['overview']) && stripos($movie['overview'], $phrase) !== false);
             });
             return [
@@ -512,5 +483,40 @@ class MovieController extends Controller
             'page' => 1,
             'total_pages' => 1
         ];
+    }
+
+    // Detect and route to the correct query method based on input
+    private function smartQuerySearch($query, $apiKey, $page) {
+        // Phrase search if query is in quotes
+        if (preg_match('/^".*"$/', trim($query))) {
+            return $this->phraseSearch($query, $apiKey, $page);
+        }
+        // Boolean search if AND/OR/NOT present
+        if (preg_match('/\b(AND|OR|NOT)\b/i', $query)) {
+            return $this->booleanSearch($query, $apiKey, $page);
+        }
+        // Fuzzy search if a word is close to a known word (use a small dictionary for demo)
+        $knownWords = ['movie', 'data', 'mining', 'analysis', 'love', 'action', 'science', 'fiction', 'war', 'romance', 'comedy', 'thriller'];
+        $words = preg_split('/\s+/', strtolower($query));
+        $fuzzy = false;
+        $corrected = [];
+        foreach ($words as $word) {
+            $minDist = 3; $best = $word;
+            foreach ($knownWords as $kw) {
+                $dist = levenshtein($word, $kw);
+                if ($dist < $minDist) {
+                    $minDist = $dist;
+                    $best = $kw;
+                }
+            }
+            if ($best !== $word) $fuzzy = true;
+            $corrected[] = $best;
+        }
+        if ($fuzzy) {
+            $correctedQuery = implode(' ', $corrected);
+            return $this->fuzzySearch($correctedQuery, $apiKey, $page);
+        }
+        // Default: DTM
+        return $this->searchDTM($query, $apiKey, $page);
     }
 }

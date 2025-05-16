@@ -468,6 +468,71 @@ function applyDynamicHighlight(query) {
     font-weight: bold;
     transition: background 0.2s, color 0.2s;
 }
+.menubar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(90deg, #1c2541 80%, #22305a 100%);
+    color: #fff;
+    border-radius: 14px;
+    box-shadow: 0 4px 18px rgba(28, 37, 65, 0.13), 0 1.5px 8px rgba(28, 37, 65, 0.10);
+    border: 1.5px solid #232e4a;
+    padding: 0.7rem 1.5rem;
+    margin: 1.5rem auto 2rem auto;
+    max-width: 900px;
+    font-size: 1.08rem;
+    font-weight: 500;
+    gap: 1.5rem;
+    transition: box-shadow 0.18s, background 0.18s;
+}
+.menubar span {
+    font-size: 1.25rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: #fff;
+    text-shadow: 0 1px 4px #232e4a;
+}
+.menubar .menu-links {
+    display: flex;
+    gap: 1.2rem;
+}
+.menubar .menu-links a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.08rem;
+    font-weight: 500;
+    padding: 6px 18px;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #232e4a 60%, #1c2541 100%);
+    box-shadow: 0 1px 4px rgba(28,37,65,0.10);
+    border: 1.5px solid #22305a;
+    transition: background 0.18s, color 0.18s, box-shadow 0.18s, border 0.18s;
+    outline: none;
+    position: relative;
+}
+.menubar .menu-links a:hover, .menubar .menu-links a.active {
+    background: linear-gradient(90deg, #00bfae 0%, #1c2541 100%);
+    color: #1c2541;
+    font-weight: bold;
+    border: 1.5px solid #00bfae;
+    box-shadow: 0 2px 8px rgba(0,209,178,0.13);
+    text-decoration: none;
+}
+@media (max-width: 700px) {
+    .menubar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.7rem;
+        padding: 0.7rem 0.7rem;
+        max-width: 99vw;
+    }
+    .menubar .menu-links {
+        gap: 0.5rem;
+    }
+    .menubar span {
+        font-size: 1.1rem;
+    }
+}
 </style>
 </div>
 @endsection

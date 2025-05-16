@@ -7,6 +7,7 @@
   --color-btn:       #1C3AA9;
   --color-text:      #1F2937;
   --color-card-bg:   #FFFFFF;
+  --point:#1c2541;
 }
 
 body {
@@ -19,7 +20,8 @@ body {
 /* ✅ Sidebar */
 .sidebar {
   width: 220px;
-  height: 2500px;
+  min-height: 100vh;
+  height: 100vh;
   background: linear-gradient(180deg, #1C2541 80%, #274690 100%);
   float: left;
   padding: 1.5rem 1rem 1rem 1rem;
@@ -29,6 +31,7 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   position: sticky;
+  top: 0;
   left: 0;
   z-index: 10;
   overflow-y: auto;
@@ -87,7 +90,7 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--color-accent);
+  background: var(--point);
   margin-right: 10px;
   opacity: 0;
   transition: opacity 0.2s;

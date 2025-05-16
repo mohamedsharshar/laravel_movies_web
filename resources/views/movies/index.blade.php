@@ -92,10 +92,10 @@
             }, e($text));
         }
     @endphp
-    <div class="movies-grid" style="grid-template-columns: repeat(7, 1fr);">
+    <div class="movies-grid" style="grid-template-columns: repeat(8, 1fr);">
         @foreach($movies as $movie)
             <a href="{{ route('movies.show', ['title' => urlencode($movie['title'])]) }}" style="text-decoration:none;color:inherit;">
-                <div class="movie-card" style="cursor:pointer;">
+                <div class="movie-card" style="cursor:pointer; min-height: 340px; max-height: 400px;">
                     <img src="https://image.tmdb.org/t/p/w500{{ $movie['poster_path'] }}" alt="{{ $movie['title'] }}">
                     <div class="movie-info">
                         <h2>{!! highlight_terms($movie['title'], $searchQuery ?? request('q')) !!}</h2>
@@ -106,6 +106,9 @@
                 </div>
             </a>
         @endforeach
+        @for($i = count($movies); $i < 40; $i++)
+            <div class="movie-card" style="visibility:hidden;"></div>
+        @endfor
     </div>
 
     {{-- ✅ Pagination --}}

@@ -23,7 +23,6 @@ class MovieController extends Controller
         $page = $request->get('page', 1);
         $query = $request->get('q');
         $method = $request->get('method', 'dtm');
-        // Fetch categories from TMDB API (cache for 1 day)
         $apiKey = config('services.tmdb.api_key');
         $categories = Cache::remember('tmdb_categories', 1440, function() use ($apiKey) {
             $res = Http::get('https://api.themoviedb.org/3/genre/movie/list', [
@@ -32,11 +31,11 @@ class MovieController extends Controller
             ]);
             return $res->ok() ? ($res->json()['genres'] ?? []) : [];
         });
+        $perPage = 40; // Show 40 movies per page
         if ($query) {
-            // Use smartQuerySearch to auto-detect method
-            $movies = $this->smartQuerySearch($query, $apiKey, $page);
+            $movies = $this->smartQuerySearch($query, $apiKey, $page); // You may want to update this for more results too
         } else {
-            $movies = $this->tmdb->popular($page);
+            $movies = $this->tmdb->popular($page, $perPage);
         }
         return view('movies.index', [
             'movies' => $movies['results'],
@@ -45,7 +44,7 @@ class MovieController extends Controller
             'overview' => $movies['results'][0]['overview'] ?? '',
             'categories' => $categories,
             'activeCategory' => $request->route('category') ?? null,
-            'searchQuery' => $query, // Pass the search query for highlighting
+            'searchQuery' => $query,
         ]);
     }
 
@@ -54,17 +53,9 @@ class MovieController extends Controller
     {
         $page = $request->get('page', 1);
         $apiKey = config('services.tmdb.api_key');
-        // جلب الأفلام الأكثر شهرة وتقييماً من TMDB
-        $response = \Illuminate\Support\Facades\Http::get('https://api.themoviedb.org/3/discover/movie', [
-            'api_key' => $apiKey,
-            'language' => 'en-US',
-            'sort_by' => 'popularity.desc',
-            'vote_count.gte' => 200, // فقط الأفلام التي لديها عدد تقييمات كافٍ
-            'vote_average.gte' => 7, // تقييم عالي
-            'page' => $page,
-        ]);
-        $movies = $response->ok() ? $response->json() : ['results' => [], 'page' => 1, 'total_pages' => 1];
-        // جلب التصنيفات
+        $perPage = 40; // Show 40 movies per page
+        $response = $this->tmdb->popular($page, $perPage);
+        $movies = $response;
         $categories = \Illuminate\Support\Facades\Cache::remember('tmdb_categories', 1440, function() use ($apiKey) {
             $res = \Illuminate\Support\Facades\Http::get('https://api.themoviedb.org/3/genre/movie/list', [
                 'language' => 'en-US',

@@ -14,15 +14,28 @@ class TmdbService
         $this->apiKey = config('services.tmdb.api_key');
     }
 
-    public function popular(int $page = 1)
+    public function popular(int $page = 1, int $perPage = 40)
     {
-        $response = Http::get("{$this->baseUrl}/movie/popular", [
-            'api_key' => $this->apiKey,
-            'language' => 'en-US',
+        // TMDB returns 20 per page, so fetch multiple pages if needed
+        $results = [];
+        $pagesNeeded = (int) ceil($perPage / 20);
+        for ($i = 0; $i < $pagesNeeded; $i++) {
+            $response = Http::get("{$this->baseUrl}/movie/popular", [
+                'api_key' => $this->apiKey,
+                'language' => 'en-US',
+                'page' => $page + $i,
+            ]);
+            if ($response->ok()) {
+                $json = $response->json();
+                $results = array_merge($results, $json['results'] ?? []);
+                $total_pages = $json['total_pages'] ?? 1;
+            }
+        }
+        return [
+            'results' => array_slice($results, 0, $perPage),
             'page' => $page,
-        ]);
-
-        return $response->json();
+            'total_pages' => $total_pages ?? 1
+        ];
     }
 
     public function getMovieVideos($movieId)

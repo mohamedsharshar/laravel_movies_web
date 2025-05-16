@@ -17,6 +17,9 @@ Route::get('/contact', function() {
     return view('contact');
 })->name('contact');
 
+// Contact form POST route
+Route::post('/contact', [\App\Http\Controllers\MovieController::class, 'contact'])->name('contact.send');
+
 // Registration form
 Route::get('/register', function () {
     return view('auth.register');

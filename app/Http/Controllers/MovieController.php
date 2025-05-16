@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
 
 class MovieController extends Controller
 {
@@ -210,6 +211,30 @@ class MovieController extends Controller
         }
 
         return response()->json(['suggestions' => $sorted]);
+    }
+
+    public function contact(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'email' => 'required|email|max:100',
+            'message' => 'required|string|max:2000',
+        ]);
+        // Send email to admin
+        Mail::html(
+            '<div style="background:#f8fafc;padding:32px 18px 24px 18px;border-radius:16px;max-width:480px;margin:0 auto;font-family:sans-serif;">
+                <h2 style="color:#1C2541;margin-bottom:8px;">New Contact Message</h2>
+                <div style="margin-bottom:12px;"><b>Name:</b> <span style="color:#00bfae;">' . e($validated['name']) . '</span></div>
+                <div style="margin-bottom:12px;"><b>Email:</b> <span style="color:#1C2541;">' . e($validated['email']) . '</span></div>
+                <div style="margin-bottom:12px;"><b>Message:</b></div>
+                <div style="background:#fff;border-radius:8px;padding:16px 12px;color:#222;font-size:1.08rem;border:1.5px solid #d1f7f2;">' . nl2br(e($validated['message'])) . '</div>
+            </div>',
+            function ($message) use ($validated) {
+                $message->to('mmshsh05@gmail.com')
+                    ->subject('New Contact Message from ' . $validated['name']);
+            }
+        );
+        return back()->with('success', 'Your message has been sent successfully!');
     }
 
     // Document-Term Matrix Search

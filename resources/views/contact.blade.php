@@ -5,7 +5,8 @@
     <div class="contact-card">
         <h1>Contact Us</h1>
         <p class="subtitle">We'd love to hear from you! Please fill out the form below and our team will get back to you as soon as possible.</p>
-        <form class="contact-form">
+        <form class="contact-form" method="POST" action="{{ route('contact.send') }}">
+            @csrf
             <div class="form-group">
                 <label for="name">Name</label>
                 <input type="text" id="name" name="name" placeholder="Your Name" required>
@@ -20,6 +21,9 @@
             </div>
             <button type="submit" class="contact-btn">Send Message</button>
         </form>
+        @if(session('success'))
+            <div style="margin-top:18px;color:#00bfae;font-weight:bold;text-align:center;">{{ session('success') }}</div>
+        @endif
     </div>
 </div>
 <style>

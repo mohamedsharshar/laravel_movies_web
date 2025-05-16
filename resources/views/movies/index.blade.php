@@ -92,7 +92,7 @@
             }, e($text));
         }
     @endphp
-    <div class="movies-grid" style="grid-template-columns: repeat(8, 1fr);">
+    <div class="movies-grid" >
         @foreach($movies as $movie)
             <a href="{{ route('movies.show', ['title' => urlencode($movie['title'])]) }}" style="text-decoration:none;color:inherit;">
                 <div class="movie-card" style="cursor:pointer; min-height: 340px; max-height: 400px;">
@@ -563,11 +563,9 @@ function applyDynamicHighlight(query) {
 
 /* Responsive Tweaks */
 @media (max-width: 1100px) {
-    .main-content {
-        padding: 1.2rem;
-    }
+   
     .menubar {
-        max-width: 98vw;
+        max-width: 68vw;
         padding: 0.7rem 0.7rem;
     }
 }
@@ -638,38 +636,83 @@ function applyDynamicHighlight(query) {
         font-size: 0.98rem;
         padding: 0.4rem 0.1rem;
     }
+    .search-box input {
+        font-size: 1rem;
+    }
+    .search-box {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
 }
 
 /* Movie Card Responsive Sizing */
 .movies-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1rem;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 1.2rem;
+}
+@media (max-width: 1200px) {
+    .movies-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 900px) {
+    .movies-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1rem;
+    }
+}
+@media (max-width: 600px) {
+    .movies-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.7rem;
+    }
 }
 .movie-card {
     background-color: var(--color-card-bg);
-    border-radius: 8px;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.10);
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    min-height: 340px;
-    max-height: 400px;
+    min-height: 320px;
+    max-height: 420px;
     height: 100%;
     transition: box-shadow 0.18s, transform 0.18s;
 }
 .movie-card:hover {
-    box-shadow: 0 6px 18px rgba(0,209,178,0.13);
-    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 8px 24px rgba(0,209,178,0.18);
+    transform: translateY(-6px) scale(1.04);
 }
 .movie-card img {
     width: 100%;
     aspect-ratio: 2/3;
     object-fit: cover;
-    min-height: 220px;
+    min-height: 180px;
     max-height: 260px;
     display: block;
+}
+@media (max-width: 900px) {
+    .movie-card {
+        min-height: 260px;
+        max-height: 340px;
+    }
+    .movie-card img {
+        min-height: 140px;
+        max-height: 200px;
+    }
+}
+@media (max-width: 600px) {
+    .movie-card {
+        min-height: 200px;
+        max-height: 320px;
+    }
+    .movie-card img {
+        min-height: 100px;
+        max-height: 160px;
+    }
 }
 .movie-info {
     flex: 1 1 auto;
@@ -683,6 +726,13 @@ function applyDynamicHighlight(query) {
     margin: 0 0 0.3rem 0;
     min-height: 2.2em;
     line-height: 1.2;
+    word-break: break-word;
+}
+@media (max-width: 600px) {
+    .movie-info h2 {
+        font-size: 1rem;
+        min-height: 1.6em;
+    }
 }
 </style>
 </div>

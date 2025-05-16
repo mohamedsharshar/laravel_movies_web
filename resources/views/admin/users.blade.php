@@ -143,6 +143,8 @@
         </tbody>
     </table>
     </div>
+</div>
+<div style="text-align:center;margin-bottom:32px;">
     <a href="{{ route('admin.dashboard') }}" class="btn-admin-back"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />

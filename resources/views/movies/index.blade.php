@@ -606,6 +606,34 @@ function applyDynamicHighlight(query) {
         flex-wrap: wrap;
         gap: 0.7rem;
     }
+    .search-box {
+        flex-direction: column;
+        gap: 0.7rem;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0.7rem 0.5rem;
+        align-items: stretch;
+    }
+    .search-box input {
+        width: 100%;
+        font-size: 1.05rem;
+        min-width: 0;
+    }
+    .search-box button.search-btn {
+        width: 100%;
+        border-radius: 8px;
+        margin-left: 0;
+        margin-top: 0.5rem;
+    }
+    .search-box button.mic-btn {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+    .search-box label, .search-box select {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
 }
 @media (max-width: 700px) {
     .menubar {
@@ -636,13 +664,12 @@ function applyDynamicHighlight(query) {
         font-size: 0.98rem;
         padding: 0.4rem 0.1rem;
     }
+    .search-box {
+        padding: 0.5rem 0.2rem;
+        gap: 0.5rem;
+    }
     .search-box input {
         font-size: 1rem;
-    }
-    .search-box {
-        flex-direction: column;
-        gap: 0.5rem;
-        padding: 0.5rem;
     }
 }
 

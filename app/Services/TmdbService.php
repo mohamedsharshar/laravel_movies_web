@@ -47,4 +47,12 @@ class TmdbService
         return $response->ok() ? $response->json()['results'] ?? [] : [];
     }
 
+    public function getMovieWatchProviders($movieId)
+    {
+        $response = Http::get("{$this->baseUrl}/movie/{$movieId}/watch/providers", [
+            'api_key' => $this->apiKey,
+        ]);
+        return $response->ok() ? $response->json()['results'] ?? [] : [];
+    }
+
 }

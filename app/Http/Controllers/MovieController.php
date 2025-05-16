@@ -90,6 +90,7 @@ class MovieController extends Controller
         ]);
         $movie = null;
         $video = null;
+        $providers = [];
         if ($response->ok()) {
             $results = $response->json()['results'] ?? [];
             $movie = collect($results)->first(function($m) use ($title) {
@@ -101,12 +102,14 @@ class MovieController extends Controller
                 $video = collect($videos)->first(function($v) {
                     return $v['site'] === 'YouTube' && $v['type'] === 'Trailer';
                 }) ?? (count($videos) ? $videos[0] : null);
+                // Fetch streaming providers
+                $providers = $tmdb->getMovieWatchProviders($movie['id']);
             }
         }
         if (!$movie) {
             abort(404, 'Movie not found');
         }
-        return view('movies.show', ['movie' => $movie, 'category' => $category, 'video' => $video]);
+        return view('movies.show', ['movie' => $movie, 'category' => $category, 'video' => $video, 'providers' => $providers]);
     }
 
     // صفحة أفلام التصنيف

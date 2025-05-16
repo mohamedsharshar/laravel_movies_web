@@ -24,6 +24,30 @@
                     <span style="margin-left:1.5rem;"><strong>Rating:</strong> ⭐ {{ $movie['vote_average'] }}/10</span>
                 </div>
                 <p style="margin:1.5rem 0 2rem 0;font-size:1.15rem;line-height:1.6;">{{ $movie['overview'] }}</p>
+                {{-- Streaming Providers Button --}}
+                @php
+                    $usProviders = $providers['US'] ?? null;
+                    $netflix = null;
+                    $amazon = null;
+                    if ($usProviders && isset($usProviders['flatrate'])) {
+                        foreach ($usProviders['flatrate'] as $prov) {
+                            if (stripos($prov['provider_name'], 'netflix') !== false) $netflix = $prov;
+                            if (stripos($prov['provider_name'], 'amazon') !== false) $amazon = $prov;
+                        }
+                    }
+                    $link = $usProviders['link'] ?? null;
+                @endphp
+                @if($netflix || $amazon)
+                    <div style="margin-bottom:1.5rem;">
+                        @if($netflix)
+                            <a href="{{ $link }}" target="_blank" class="stream-btn netflix-btn">▶ Watch on Netflix</a>
+                        @endif
+                        @if($amazon)
+                            <a href="{{ $link }}" target="_blank" class="stream-btn amazon-btn">▶ Watch on Amazon</a>
+                        @endif
+                    </div>
+                @endif
+                {{-- End Streaming Providers Button --}}
                 @if($video && $video['site'] === 'YouTube')
                     <div style="margin:2rem 0 0 0;">
                         <h3 style="margin-bottom:0.5rem;">Watch Trailer</h3>
@@ -41,4 +65,43 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('styles')
+<style>
+.stream-btn {
+    display: inline-block;
+    margin-right: 1rem;
+    margin-bottom: 0.5rem;
+    padding: 0.7rem 1.7rem;
+    font-size: 1.13rem;
+    font-weight: 700;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #00bfae 60%, #1c2541 100%);
+    color: #fff;
+    text-decoration: none;
+    box-shadow: 0 2px 12px rgba(0,209,178,0.13);
+    transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s;
+    border: none;
+    outline: none;
+}
+.stream-btn:hover {
+    background: linear-gradient(90deg, #1c2541 60%, #00bfae 100%);
+    color: #fff;
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 4px 18px rgba(0,209,178,0.18);
+}
+.netflix-btn {
+    background: linear-gradient(90deg, #e50914 60%, #1c2541 100%);
+}
+.netflix-btn:hover {
+    background: linear-gradient(90deg, #1c2541 60%, #e50914 100%);
+}
+.amazon-btn {
+    background: linear-gradient(90deg, #ff9900 60%, #1c2541 100%);
+}
+.amazon-btn:hover {
+    background: linear-gradient(90deg, #1c2541 60%, #ff9900 100%);
+}
+</style>
 @endsection

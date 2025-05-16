@@ -112,48 +112,86 @@
     @php
         $side = 2; // how many pages to show on each side of current
         $window = $side * 2;
+        $minPage = 1;
+        $maxPage = 500;
+        $currentPage = max($minPage, min($currentPage, $maxPage));
+        $totalPages = $maxPage;
     @endphp
-    <div class="pagination flex justify-center items-center gap-2 mt-8 mb-4">
-        {{-- Previous Button --}}
-        <a href="?page={{ max(1, $currentPage - 1) }}" class="{{ $currentPage == 1 ? 'pointer-events-none opacity-50' : '' }}">
-            <button class="px-4 py-2 rounded-md bg-[var(--color-accent)] text-white font-semibold transition hover:bg-[#00bfae] focus:outline-none">Previous</button>
-        </a>
-        {{-- Page Numbers --}}
-        @if ($totalPages <= $window + 4)
-            @for ($i = 1; $i <= $totalPages; $i++)
-                <a href="?page={{ $i }}" class="{{ $currentPage == $i ? 'pointer-events-none' : '' }}">
-                    <button class="px-3 py-2 rounded-md mx-1 font-semibold transition focus:outline-none {{ $currentPage == $i ? 'bg-blue-700 text-white shadow' : 'bg-white text-gray-700 hover:bg-blue-100' }}">{{ $i }}</button>
-                </a>
-            @endfor
-        @else
-            {{-- First page --}}
-            <a href="?page=1" class="{{ $currentPage == 1 ? 'pointer-events-none' : '' }}">
-                <button class="px-3 py-2 rounded-md mx-1 font-semibold transition focus:outline-none {{ $currentPage == 1 ? 'bg-blue-700 text-white shadow' : 'bg-white text-gray-700 hover:bg-blue-100' }}">1</button>
+    <div class="pagination-wrapper">
+        <div class="pagination flex justify-center items-center gap-2 mt-8 mb-4 animate-fade-in">
+            {{-- Previous Button --}}
+            <a href="?page={{ max($minPage, $currentPage - 1) }}" class="{{ $currentPage == $minPage ? 'pointer-events-none opacity-50' : '' }}">
+                <button class="px-4 py-2 rounded-md bg-[var(--color-accent)] text-white font-semibold transition hover:bg-[#00bfae] focus:outline-none">Previous</button>
             </a>
-            {{-- Ellipsis before window --}}
-            @if ($currentPage > $window)
-                <span class="px-2 text-gray-400">...</span>
-            @endif
-            {{-- Page window --}}
-            @for ($i = max(2, $currentPage - $side); $i <= min($totalPages - 1, $currentPage + $side); $i++)
-                <a href="?page={{ $i }}" class="{{ $currentPage == $i ? 'pointer-events-none' : '' }}">
-                    <button class="px-3 py-2 rounded-md mx-1 font-semibold transition focus:outline-none {{ $currentPage == $i ? 'bg-blue-700 text-white shadow' : 'bg-white text-gray-700 hover:bg-blue-100' }}">{{ $i }}</button>
+            {{-- Page Numbers --}}
+            @if ($totalPages <= $window + 4)
+                @for ($i = $minPage; $i <= $totalPages; $i++)
+                    <a href="?page={{ $i }}" class="{{ $currentPage == $i ? 'pointer-events-none' : '' }}">
+                        <button class="px-3 py-2 rounded-md mx-1 font-semibold transition focus:outline-none {{ $currentPage == $i ? 'bg-blue-700 text-white shadow scale-110' : 'bg-white text-gray-700 hover:bg-blue-100' }}">{{ $i }}</button>
+                    </a>
+                @endfor
+            @else
+                {{-- First page --}}
+                <a href="?page=1" class="{{ $currentPage == 1 ? 'pointer-events-none' : '' }}">
+                    <button class="px-3 py-2 rounded-md mx-1 font-semibold transition focus:outline-none {{ $currentPage == 1 ? 'bg-blue-700 text-white shadow scale-110' : 'bg-white text-gray-700 hover:bg-blue-100' }}">1</button>
                 </a>
-            @endfor
-            {{-- Ellipsis after window --}}
-            @if ($currentPage < $totalPages - $window + 1)
-                <span class="px-2 text-gray-400">...</span>
+                {{-- Ellipsis before window --}}
+                @if ($currentPage > $window)
+                    <span class="px-2 text-gray-400">...</span>
+                @endif
+                {{-- Page window --}}
+                @for ($i = max(2, $currentPage - $side); $i <= min($totalPages - 1, $currentPage + $side); $i++)
+                    <a href="?page={{ $i }}" class="{{ $currentPage == $i ? 'pointer-events-none' : '' }}">
+                        <button class="px-3 py-2 rounded-md mx-1 font-semibold transition focus:outline-none {{ $currentPage == $i ? 'bg-blue-700 text-white shadow scale-110' : 'bg-white text-gray-700 hover:bg-blue-100' }}">{{ $i }}</button>
+                    </a>
+                @endfor
+                {{-- Ellipsis after window --}}
+                @if ($currentPage < $totalPages - $window + 1)
+                    <span class="px-2 text-gray-400">...</span>
+                @endif
+                {{-- Last page --}}
+                <a href="?page={{ $totalPages }}" class="{{ $currentPage == $totalPages ? 'pointer-events-none' : '' }}">
+                    <button class="px-3 py-2 rounded-md mx-1 font-semibold transition focus:outline-none {{ $currentPage == $totalPages ? 'bg-blue-700 text-white shadow scale-110' : 'bg-white text-gray-700 hover:bg-blue-100' }}">{{ $totalPages }}</button>
+                </a>
             @endif
-            {{-- Last page --}}
-            <a href="?page={{ $totalPages }}" class="{{ $currentPage == $totalPages ? 'pointer-events-none' : '' }}">
-                <button class="px-3 py-2 rounded-md mx-1 font-semibold transition focus:outline-none {{ $currentPage == $totalPages ? 'bg-blue-700 text-white shadow' : 'bg-white text-gray-700 hover:bg-blue-100' }}">{{ $totalPages }}</button>
+            {{-- Next Button --}}
+            <a href="?page={{ min($totalPages, $currentPage + 1) }}" class="{{ $currentPage == $totalPages ? 'pointer-events-none opacity-50' : '' }}">
+                <button class="px-4 py-2 rounded-md bg-[var(--color-accent)] text-white font-semibold transition hover:bg-[#00bfae] focus:outline-none">Next</button>
             </a>
-        @endif
-        {{-- Next Button --}}
-        <a href="?page={{ min($totalPages, $currentPage + 1) }}" class="{{ $currentPage == $totalPages ? 'pointer-events-none opacity-50' : '' }}">
-            <button class="px-4 py-2 rounded-md bg-[var(--color-accent)] text-white font-semibold transition hover:bg-[#00bfae] focus:outline-none">Next</button>
-        </a>
+        </div>
     </div>
+    <style>
+        .pagination-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin: 0 auto 2rem auto;
+            margin-top: 20px;
+        }
+        .animate-fade-in {
+            animation: fadeInUp 0.7s cubic-bezier(.39,.575,.565,1.000);
+        }
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        .pagination button.scale-110 {
+            transform: scale(1.13) !important;
+            z-index: 2;
+            box-shadow: 0 4px 16px rgba(28,58,169,0.18);
+            border: 2.5px solid var(--color-accent, #00bfae);
+        }
+        .pagination button {
+            transition: all 0.18s cubic-bezier(.39,.575,.565,1.000);
+        }
+    </style>
 </div>
 
 {{-- ✅ Voice Search + Suggestions --}}

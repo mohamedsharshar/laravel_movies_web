@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar', // allow avatar to be mass assigned
     ];
 
     /**

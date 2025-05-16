@@ -29,7 +29,8 @@ Route::post('/login', [\App\Http\Controllers\Auth\LoginController::class, 'login
 Route::post('/logout', [\App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/profile', function () {
-        return view('auth.profile');
-    })->name('profile');
+    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'show'])->name('profile');
+    Route::get('/profile/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile/update', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/avatar/delete', [App\Http\Controllers\ProfileController::class, 'deleteAvatar'])->name('profile.avatar.delete');
 });

@@ -12,7 +12,7 @@
             <h2 class="logo" style="font-size: 1.5rem; font-weight: bold; color: white; margin: 0; flex-shrink: 0;">🎬 Movie App</h2>
             <ul class="nav-links" style="list-style: none; display: flex; gap: 1.5rem; margin: 0; padding: 0; flex-wrap: wrap;">
                 <li><a href="{{ route('movies.index') }}">Home</a></li>
-                <li><a href="#">Popular</a></li>
+                <li><a href={{ route('movies.popular') }}>Popular</a></li>
                 <li><a href="#">Contact Us</a></li>
             </ul>
             @auth

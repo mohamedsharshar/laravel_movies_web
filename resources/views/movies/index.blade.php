@@ -26,7 +26,7 @@
     <span style="font-weight:bold; font-size:1.1rem;">🎬 Movie App</span>
     <div class="menu-links">
         <a href="{{ route('movies.index') }}">Home</a>
-        <a href="{{ route('movies.category', ['category' => 'Popular']) }}">Popular</a>
+        <a href="{{ route('movies.popular') }}">Popular</a>
         <a href="{{ route('movies.category', ['category' => 'Documentary']) }}">Contact Us</a>
     </div>
 </div>

@@ -48,6 +48,39 @@ class MovieController extends Controller
         ]);
     }
 
+    // صفحة الأفلام الأكثر شهرة وتقييماً
+    public function popular(Request $request)
+    {
+        $page = $request->get('page', 1);
+        $apiKey = config('services.tmdb.api_key');
+        // جلب الأفلام الأكثر شهرة وتقييماً من TMDB
+        $response = \Illuminate\Support\Facades\Http::get('https://api.themoviedb.org/3/discover/movie', [
+            'api_key' => $apiKey,
+            'language' => 'en-US',
+            'sort_by' => 'popularity.desc',
+            'vote_count.gte' => 200, // فقط الأفلام التي لديها عدد تقييمات كافٍ
+            'vote_average.gte' => 7, // تقييم عالي
+            'page' => $page,
+        ]);
+        $movies = $response->ok() ? $response->json() : ['results' => [], 'page' => 1, 'total_pages' => 1];
+        // جلب التصنيفات
+        $categories = \Illuminate\Support\Facades\Cache::remember('tmdb_categories', 1440, function() use ($apiKey) {
+            $res = \Illuminate\Support\Facades\Http::get('https://api.themoviedb.org/3/genre/movie/list', [
+                'language' => 'en-US',
+            ]);
+            return $res->ok() ? ($res->json()['genres'] ?? []) : [];
+        });
+        return view('movies.index', [
+            'movies' => $movies['results'],
+            'currentPage' => $movies['page'],
+            'totalPages' => min($movies['total_pages'], 500),
+            'overview' => $movies['results'][0]['overview'] ?? '',
+            'categories' => $categories,
+            'activeCategory' => 'Popular',
+            'searchQuery' => null,
+        ]);
+    }
+
     // صفحة تفاصيل فيلم بناءً على العنوان
     public function show($title, Request $request)
     {

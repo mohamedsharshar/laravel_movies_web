@@ -9,6 +9,9 @@ Route::get('/api/suggestions', [MovieController::class, 'suggestions']);
 Route::get('/movie/{title}', [MovieController::class, 'show'])->name('movies.show');
 Route::get('/category/{category}', [MovieController::class, 'category'])->name('movies.category');
 
+// صفحة الأفلام الأكثر شهرة وتقييماً
+Route::get('/popular', [\App\Http\Controllers\MovieController::class, 'popular'])->name('movies.popular');
+
 // Registration form
 Route::get('/register', function () {
     return view('auth.register');

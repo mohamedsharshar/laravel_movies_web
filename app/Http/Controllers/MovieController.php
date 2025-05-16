@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class MovieController extends Controller
 {
@@ -229,6 +230,53 @@ class MovieController extends Controller
             }
         );
         return back()->with('success', 'Your message has been sent successfully!');
+    }
+
+    // Movie AI Assistant page
+    public function aiAssistant()
+    {
+        return view('movies.ai');
+    }
+
+    // AI chat API endpoint
+    public function aiAsk(Request $request)
+    {
+        $request->validate(['message' => 'required|string|max:500']);
+        $userMsg = $request->input('message');
+        $apiKey = env('OPENAI_API_KEY');
+        if (!$apiKey) {
+            return response()->json(['reply' => 'AI service not configured. Please set OPENAI_API_KEY in your .env file.']);
+        }
+        try {
+            $headers = [
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ];
+            // If using a project key, add OpenAI-Beta header
+            if (str_starts_with($apiKey, 'sk-proj-')) {
+                $headers['OpenAI-Beta'] = 'assistants=v1';
+            }
+            $response = Http::withHeaders($headers)
+                ->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => 'gpt-3.5-turbo',
+                    'messages' => [
+                        ['role' => 'system', 'content' => 'You are a helpful AI movie assistant. Answer in English or Arabic as appropriate. If the user asks for movie recommendations, suggest popular or highly rated movies.'],
+                        ['role' => 'user', 'content' => $userMsg],
+                    ],
+                    'max_tokens' => 200,
+                    'temperature' => 0.7,
+                ]);
+            if ($response->ok()) {
+                $reply = $response->json('choices.0.message.content') ?? 'Sorry, I could not generate a reply.';
+            } else {
+                Log::error('OpenAI API error', ['status' => $response->status(), 'body' => $response->body()]);
+                $reply = 'Sorry, there was a problem contacting the AI service. [' . $response->status() . ']';
+            }
+        } catch (\Exception $e) {
+            Log::error('OpenAI API exception', ['error' => $e->getMessage()]);
+            $reply = 'Sorry, there was an error processing your request.';
+        }
+        return response()->json(['reply' => $reply]);
     }
 
     // Document-Term Matrix Search

@@ -197,6 +197,53 @@
     </style>
 </div>
 
+{{-- AI Assistant Button --}}
+<button id="ai-assistant-btn" style="position:fixed;bottom:32px;right:32px;z-index:1000;background:linear-gradient(90deg,#00bfae 60%,#1c2541 100%);color:#fff;font-size:1.2rem;font-weight:700;padding:1rem 2.2rem;border:none;border-radius:16px;box-shadow:0 4px 24px #00bfae33;cursor:pointer;transition:background 0.18s,transform 0.18s;">
+    🤖 Try AI Assistant
+</button>
+
+{{-- AI Assistant Modal --}}
+<div id="ai-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,30,40,0.85);z-index:2000;align-items:center;justify-content:center;">
+    <div style="background:#fff;max-width:420px;width:95vw;border-radius:18px;box-shadow:0 8px 32px #00bfae33;padding:2.2rem 1.2rem 1.2rem 1.2rem;position:relative;">
+        <button id="ai-modal-close" style="position:absolute;top:18px;right:18px;background:none;border:none;font-size:1.7rem;color:#00bfae;cursor:pointer;">&times;</button>
+        <h2 style="font-size:1.5rem;font-weight:900;margin-bottom:1.2rem;text-align:center;color:#1c2541;">🎬 Movie AI Assistant</h2>
+        <div id="ai-messages" style="min-height:120px;max-height:260px;overflow-y:auto;margin-bottom:1rem;"></div>
+        <form id="ai-form" style="display:flex;gap:0.5rem;">
+            <input type="text" id="ai-input" name="message" placeholder="Ask me about movies..." autocomplete="off" style="flex:1;padding:0.7rem 1rem;border-radius:8px;border:1.5px solid #00bfae;font-size:1.08rem;">
+            <button type="submit" style="background:linear-gradient(90deg,#00bfae 60%,#1c2541 100%);color:#fff;font-weight:700;padding:0.7rem 1.2rem;border:none;border-radius:8px;cursor:pointer;transition:background 0.18s;">Send</button>
+        </form>
+    </div>
+</div>
+<script>
+const aiBtn = document.getElementById('ai-assistant-btn');
+const aiModal = document.getElementById('ai-modal');
+const aiClose = document.getElementById('ai-modal-close');
+aiBtn.onclick = () => aiModal.style.display = 'flex';
+aiClose.onclick = () => aiModal.style.display = 'none';
+aiModal.onclick = e => { if(e.target === aiModal) aiModal.style.display = 'none'; };
+const aiForm = document.getElementById('ai-form');
+const aiInput = document.getElementById('ai-input');
+const aiMessages = document.getElementById('ai-messages');
+aiForm.onsubmit = async function(e) {
+    e.preventDefault();
+    const userMsg = aiInput.value.trim();
+    if (!userMsg) return;
+    aiMessages.innerHTML += `<div style='margin-bottom:10px;text-align:right;'><span style='background:#00bfae;color:#fff;padding:8px 16px;border-radius:8px 8px 2px 16px;display:inline-block;'>${userMsg}</span></div>`;
+    aiInput.value = '';
+    aiMessages.innerHTML += `<div id='ai-typing' style='margin-bottom:10px;'><span style='background:#e0e7ef;color:#222;padding:8px 16px;border-radius:8px 8px 16px 2px;display:inline-block;'>AI is typing...</span></div>`;
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+    const res = await fetch("/ai/ask", {
+        method: "POST",
+        headers: {"Content-Type": "application/json", "X-CSRF-TOKEN": document.querySelector('meta[name=csrf-token]').content},
+        body: JSON.stringify({message: userMsg})
+    });
+    const data = await res.json();
+    document.getElementById('ai-typing').remove();
+    aiMessages.innerHTML += `<div style='margin-bottom:10px;text-align:left;'><span style='background:#e0e7ef;color:#222;padding:8px 16px;border-radius:8px 8px 16px 2px;display:inline-block;'>${data.reply}</span></div>`;
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+};
+</script>
+
 {{-- ✅ Voice Search + Suggestions --}}
 <script>
 // --- Query Method Highlight ---

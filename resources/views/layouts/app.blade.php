@@ -18,7 +18,11 @@
             @auth
             <div class="user-menu" style="position: relative; margin-left: 1.5rem;">
                 <button id="userDropdownBtn" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; color: #fff; font-size: 1.2rem;">
-                    <span style="font-size: 1.6rem; margin-right: 6px;">👤</span>
+                    @if(Auth::user()->avatar && file_exists(public_path('storage/' . Auth::user()->avatar)))
+                        <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="Avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:8px;border:2px solid #ffe082;background:#fff;">
+                    @else
+                        <span style="font-size: 1.6rem; margin-right: 8px;">👤</span>
+                    @endif
                     <span style="font-weight: 500; font-size: 1.05rem;">{{ Auth::user()->name ?? 'User' }}</span>
                     <svg style="margin-left: 4px; width: 16px; height: 16px; fill: #fff;" viewBox="0 0 20 20"><path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.06l3.71-3.83a.75.75 0 1 1 1.08 1.04l-4.25 4.39a.75.75 0 0 1-1.08 0L5.21 8.27a.75.75 0 0 1 .02-1.06z"/></svg>
                 </button>

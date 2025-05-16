@@ -1,3 +1,5 @@
+* { box-sizing: border-box; }
+
 :root {
   --color-sidebar-bg: #1C2541;
   --color-page-bg:   #F8FAFC;
@@ -32,23 +34,21 @@ body {
   left: 0;
   z-index: 10;
   overflow-y: auto;
-}
-.sidebar::-webkit-scrollbar {
-  width: 10px;
-  background: #22305a;
-  border-radius: 8px;
-}
-.sidebar::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #00d1b2 0%, #1C2541 100%);
-  border-radius: 8px;
-  min-height: 40px;
-}
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #00bfae 0%, #274690 100%);
-}
-.sidebar {
+  /* Custom scrollbar for Firefox */
   scrollbar-width: thin;
   scrollbar-color: #00d1b2 #22305a;
+}
+/* Custom scrollbar for WebKit browsers */
+.sidebar::-webkit-scrollbar {
+  width: 8px;
+  background: #22305a;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background: #00d1b2;
+  border-radius: 6px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: #009e8e;
 }
 .sidebar h3 {
   color: #fff;
@@ -120,6 +120,28 @@ body {
   .main-content {
     margin-left: 0;
     padding: 1rem;
+  }
+  .menubar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.7rem 0.7rem;
+  }
+  .menubar .menu-links {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+}
+@media (max-width: 600px) {
+  .main-content {
+    padding: 0.5rem;
+  }
+  .sidebar h3 {
+    font-size: 1rem;
+  }
+  .menubar span {
+    font-size: 1rem;
   }
 }
 
@@ -308,25 +330,51 @@ body {
 /* ✅ Movies grid */
 .movies-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 1rem;
+}
+@media (max-width: 900px) {
+  .movies-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+@media (max-width: 600px) {
+  .movies-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 .movie-card {
   background-color: var(--color-card-bg);
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 340px;
+  max-height: 400px;
+  height: 100%;
 }
 .movie-card img {
   width: 100%;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  min-height: 220px;
+  max-height: 260px;
   display: block;
 }
 .movie-info {
-  padding: 0.5rem;
+  flex: 1 1 auto;
+  padding: 0.7rem 0.7rem 0.5rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 .movie-info h2 {
   font-size: 1.1rem;
-  margin: 0.
+  margin: 0 0 0.3rem 0;
+  min-height: 2.2em;
+  line-height: 1.2;
 }
 .suggestions {
     margin-top: 10px;

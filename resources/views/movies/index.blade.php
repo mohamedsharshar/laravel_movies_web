@@ -380,6 +380,7 @@ function applyDynamicHighlight(query) {
     cursor: pointer;
     display: inline-block;
     font-size: 14px;
+    transition: background 0.18s, color 0.18s;
 }
 .tag:hover {
     background-color: #e2e8f0;
@@ -518,20 +519,129 @@ function applyDynamicHighlight(query) {
     box-shadow: 0 2px 8px rgba(0,209,178,0.13);
     text-decoration: none;
 }
-@media (max-width: 700px) {
+
+/* Responsive Tweaks */
+@media (max-width: 1100px) {
+    .main-content {
+        padding: 1.2rem;
+    }
+    .menubar {
+        max-width: 98vw;
+        padding: 0.7rem 0.7rem;
+    }
+}
+@media (max-width: 900px) {
+    .sidebar {
+        width: 100vw !important;
+        height: auto !important;
+        min-height: unset !important;
+        position: static !important;
+        top: unset !important;
+        float: none !important;
+        box-shadow: none !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        padding: 1rem 0.5rem !important;
+    }
+    .sidebar ul {
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+    }
+    .main-content {
+        margin-left: 0 !important;
+        padding: 1rem !important;
+    }
+    .movies-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
     .menubar {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.7rem;
-        padding: 0.7rem 0.7rem;
-        max-width: 99vw;
+        max-width: 100vw;
+        padding: 0.7rem 0.5rem;
     }
     .menubar .menu-links {
+        flex-wrap: wrap;
+        gap: 0.7rem;
+    }
+}
+@media (max-width: 700px) {
+    .menubar {
+        flex-direction: column;
+        align-items: flex-start;
         gap: 0.5rem;
+        font-size: 1rem;
+        padding: 0.5rem 0.3rem;
     }
     .menubar span {
         font-size: 1.1rem;
     }
+    .menubar .menu-links {
+        gap: 0.5rem;
+    }
+}
+@media (max-width: 600px) {
+    .movies-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .main-content {
+        padding: 0.5rem !important;
+    }
+    .sidebar h3 {
+        font-size: 1rem;
+    }
+    .menubar {
+        font-size: 0.98rem;
+        padding: 0.4rem 0.1rem;
+    }
+}
+
+/* Movie Card Responsive Sizing */
+.movies-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+}
+.movie-card {
+    background-color: var(--color-card-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 340px;
+    max-height: 400px;
+    height: 100%;
+    transition: box-shadow 0.18s, transform 0.18s;
+}
+.movie-card:hover {
+    box-shadow: 0 6px 18px rgba(0,209,178,0.13);
+    transform: translateY(-4px) scale(1.03);
+}
+.movie-card img {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    min-height: 220px;
+    max-height: 260px;
+    display: block;
+}
+.movie-info {
+    flex: 1 1 auto;
+    padding: 0.7rem 0.7rem 0.5rem 0.7rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+.movie-info h2 {
+    font-size: 1.1rem;
+    margin: 0 0 0.3rem 0;
+    min-height: 2.2em;
+    line-height: 1.2;
 }
 </style>
 </div>

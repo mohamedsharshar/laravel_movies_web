@@ -12,6 +12,11 @@ Route::get('/category/{category}', [MovieController::class, 'category'])->name('
 // صفحة الأفلام الأكثر شهرة وتقييماً
 Route::get('/popular', [\App\Http\Controllers\MovieController::class, 'popular'])->name('movies.popular');
 
+// Contact Us page
+Route::get('/contact', function() {
+    return view('contact');
+})->name('contact');
+
 // Registration form
 Route::get('/register', function () {
     return view('auth.register');

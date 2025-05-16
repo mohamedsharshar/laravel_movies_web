@@ -13,7 +13,7 @@
             <ul class="nav-links" style="list-style: none; display: flex; gap: 1.5rem; margin: 0; padding: 0; flex-wrap: wrap;">
                 <li><a href="{{ route('movies.index') }}">Home</a></li>
                 <li><a href={{ route('movies.popular') }}>Popular</a></li>
-                <li><a href="#">Contact Us</a></li>
+                <li><a href={{ route('contact') }}>Contact Us</a></li>
             </ul>
             @auth
             <div class="user-menu" style="position: relative; margin-left: 1.5rem;">

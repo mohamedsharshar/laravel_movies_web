@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="sidebar" style="overflow-y:auto; max-height:100vh;">
+<div class="sidebar" style="overflow-y:auto;">
     <h3 class="text-white mb-4">🎛️ Filters</h3>
     <ul class="text-white space-y-2">
         <li>
@@ -27,7 +27,7 @@
     <div class="menu-links">
         <a href="{{ route('movies.index') }}">Home</a>
         <a href="{{ route('movies.popular') }}">Popular</a>
-        <a href="{{ route('movies.category', ['category' => 'Documentary']) }}">Contact Us</a>
+        <a href={{ route('contact') }}>Contact Us</a>
     </div>
 </div>
 

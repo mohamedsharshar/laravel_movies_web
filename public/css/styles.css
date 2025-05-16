@@ -19,9 +19,8 @@ body {
 /* ✅ Sidebar */
 .sidebar {
   width: 220px;
+  height: 2000px;
   background: linear-gradient(180deg, #1C2541 80%, #274690 100%);
-  min-height: 100vh;
-  height: calc(100vh - 64px); 
   float: left;
   padding: 1.5rem 1rem 1rem 1rem;
   box-sizing: border-box;
@@ -30,7 +29,6 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   position: sticky;
-  top: 64px;
   left: 0;
   z-index: 10;
   overflow-y: auto;

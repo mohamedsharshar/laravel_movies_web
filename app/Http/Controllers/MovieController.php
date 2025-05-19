@@ -18,7 +18,6 @@ class MovieController extends Controller
         $this->tmdb = $tmdb;
     }
 
-    // صفحة الأفلام الشعبية
     public function index(Request $request)
     {
         $page = $request->get('page', 1);
@@ -74,7 +73,6 @@ class MovieController extends Controller
         ]);
     }
 
-    // صفحة تفاصيل فيلم بناءً على العنوان
     public function show($title, Request $request)
     {
         $category = $request->query('category');
